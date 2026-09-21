@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="个人 APP 可交互离线原型">
+  <title>个人 APP 原型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <section class="page" data-page="home" aria-labelledby="home-title">
+      <div class="page-inner">
+        <h1 id="home-title" class="page-title">首页</h1>
+        <div class="section-heading">
+          <h2>今日待办</h2>
+          <span id="home-todo-count" class="section-meta"></span>
+        </div>
+        <article class="card home-todo-card" id="home-todo-list"></article>
+
+        <div class="section-heading meal-heading">
+          <h2>下一餐</h2>
+          <span class="section-meta">午餐 12:00</span>
+        </div>
+        <button id="home-next-meal" class="card next-meal-card" type="button" aria-label="查看午餐">
+          <div id="home-next-meal-list" class="meal-summary-list"></div>
+        </button>
+      </div>
+    </section>
+
+    <section class="page" data-page="meals" aria-labelledby="meals-title">
+      <div class="page-inner">
+        <header class="page-header">
+          <h1 id="meals-title" class="page-title">点餐</h1>
+          <button id="meal-edit-toggle" class="text-button" type="button">修改</button>
+        </header>
+        <div id="meals-content"></div>
+      </div>
+    </section>
+
+    <section class="page food-select-page" data-page="food-select" aria-labelledby="food-select-title">
+      <div class="select-header">
+        <button id="back-to-meals" class="back-button" type="button" aria-label="返回点餐页"><span></span></button>
+        <div>
+          <h1 id="food-select-title" class="page-title">选餐</h1>
+          <p id="meal-target-label" class="target-label"></p>
+        </div>
+      </div>
+      <div class="food-select-layout">
+        <nav id="food-categories" class="food-categories" aria-label="食物分类"></nav>
+        <div id="food-list" class="food-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="page" data-page="todos" aria-labelledby="todos-title">
+      <div class="page-inner">
+        <h1 id="todos-title" class="page-title">待办</h1>
+        <section class="card calendar-card" aria-label="任务日历">
+          <div class="calendar-toolbar">
+            <button id="previous-month" class="calendar-arrow previous" type="button" aria-label="上个月"></button>
+            <h2 id="calendar-title"></h2>
+            <button id="next-month" class="calendar-arrow next" type="button" aria-label="下个月"></button>
+          </div>
+          <div class="weekday-row" aria-hidden="true">
+            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+          </div>
+          <div id="calendar-days" class="calendar-days" aria-label="选择日期"></div>
+        </section>
+        <form id="task-form" class="task-entry" novalidate>
+          <label class="sr-only" for="task-input">添加任务</label>
+          <input id="task-input" type="text" maxlength="50" placeholder="添加任务" autocomplete="off">
+          <button class="round-add" type="submit" aria-label="添加任务"><span></span></button>
+        </form>
+        <div id="todo-list" class="todo-list"></div>
+      </div>
+    </section>
+
+    <section class="page" data-page="profile" aria-labelledby="profile-title">
+      <div class="page-inner">
+        <h1 id="profile-title" class="page-title">我的</h1>
+        <section class="card profile-card">
+          <div class="avatar" aria-label="用户头像"></div>
+          <dl>
+            <div><dt>昵称</dt><dd>小满</dd></div>
+            <div><dt>手机号</dt><dd>138****8888</dd></div>
+          </dl>
+        </section>
+        <button id="logout-button" class="logout-button" type="button">退出登录</button>
+      </div>
+    </section>
+  </main>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="主导航">
+    <button type="button" data-nav="home" class="nav-item"><span class="nav-icon icon-home"></span><span>首页</span></button>
+    <button type="button" data-nav="meals" class="nav-item"><span class="nav-icon icon-meals"><i></i><i></i></span><span>点餐</span></button>
+    <button type="button" data-nav="todos" class="nav-item"><span class="nav-icon icon-todos"></span><span>待办</span></button>
+    <button type="button" data-nav="profile" class="nav-item"><span class="nav-icon icon-profile"></span><span>我的</span></button>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="logout-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal="true"></div>
+    <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+      <h2 id="logout-modal-title">确认退出登录？</h2>
+      <p>这只是原型演示，不会跳转到登录页面。</p>
+      <div class="modal-actions">
+        <button id="cancel-logout" class="modal-button secondary" type="button">取消</button>
+        <button id="confirm-logout" class="modal-button danger" type="button">确认退出</button>
+      </div>
+    </section>
+  </div>
+
+  <script defer src="app.js"></script>
+</body>
+</html>
