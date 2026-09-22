@@ -4,6 +4,8 @@
   var STORAGE_KEY = "personalAppPrototype.v1";
   var PAGE_NAMES = ["home", "meals", "food-select", "todos", "profile"];
   var mealLabels = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐" };
+  var mealEnglishLabels = { breakfast: "BREAKFAST", lunch: "LUNCH", dinner: "DINNER" };
+  var mealNumbers = { breakfast: "01", lunch: "02", dinner: "03" };
   var categories = [
     { id: "staple", name: "主食" },
     { id: "meat", name: "肉类" },
@@ -23,8 +25,15 @@
     milk: { id: "milk", name: "牛奶", category: "drink" }
   };
 
+  var weekdayNamesZh = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  var weekdayNamesEn = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
   function pad(number) { return String(number).padStart(2, "0"); }
   function toDateKey(date) { return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()); }
+  function parseDateKey(key) {
+    var parts = key.split("-");
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  }
   function makeId(prefix) { return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7); }
   function makeMeal(foodId, id) { return { id: id || makeId("meal-item"), foodId: foodId, name: foods[foodId].name }; }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -32,6 +41,24 @@
     return String(value).replace(/[&<>"']/g, function (character) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
     });
+  }
+
+  // 展示用日期辅助函数（纯展示，不参与日期逻辑运算）
+  function formatFullDateZh(date) {
+    return date.getFullYear() + " 年 " + (date.getMonth() + 1) + " 月 " + date.getDate() + " 日";
+  }
+  function formatShortDate(date) {
+    return pad(date.getMonth() + 1) + "." + pad(date.getDate());
+  }
+  function formatWeekdayZh(date) {
+    return weekdayNamesZh[date.getDay()];
+  }
+  function formatWeekdayEn(date) {
+    return weekdayNamesEn[date.getDay()];
+  }
+  function formatTodoSelectedDate(key) {
+    var d = parseDateKey(key);
+    return pad(d.getMonth() + 1) + " 月 " + pad(d.getDate()) + " 日 · " + formatWeekdayZh(d);
   }
 
   var now = new Date();
@@ -73,10 +100,14 @@
     homeTodoList: document.getElementById("home-todo-list"),
     homeNextMeal: document.getElementById("home-next-meal"),
     homeNextMealList: document.getElementById("home-next-meal-list"),
+    homeWeekdayEn: document.getElementById("home-weekday-en"),
+    homeDateShort: document.getElementById("home-date-short"),
+    homeDateFull: document.getElementById("home-date-full"),
     mealEditToggle: document.getElementById("meal-edit-toggle"),
     mealsContent: document.getElementById("meals-content"),
     backToMeals: document.getElementById("back-to-meals"),
     mealTargetLabel: document.getElementById("meal-target-label"),
+    mealTargetEn: document.getElementById("meal-target-en"),
     categories: document.getElementById("food-categories"),
     foodList: document.getElementById("food-list"),
     calendarTitle: document.getElementById("calendar-title"),
@@ -86,6 +117,8 @@
     taskForm: document.getElementById("task-form"),
     taskInput: document.getElementById("task-input"),
     todoList: document.getElementById("todo-list"),
+    todoSelectedDateLabel: document.getElementById("todo-selected-date-label"),
+    todoCountBadge: document.getElementById("todo-count-badge"),
     toast: document.getElementById("toast"),
     logoutButton: document.getElementById("logout-button"),
     logoutModal: document.getElementById("logout-modal"),
@@ -133,32 +166,52 @@
   }
 
   function getTasks(date) { return state.tasksByDate[date] || []; }
-  function mealMarkup(item, compact) {
-    var sizeClass = compact ? "summary-food" : "meal-food";
-    return "<div class=\"" + sizeClass + "\">" +
-      "<div class=\"food-thumb img-" + item.foodId + "\"></div>" +
-      "<span class=\"" + (compact ? "" : "meal-") + "food-name\">" + escapeHtml(item.name) + "</span>" +
-      "</div>";
+
+  // 渲染单个餐品卡片（使用独立本地素材 assets/food/{foodId}.png）
+  function foodItemMarkup(item, options) {
+    var opt = options || {};
+    var showDelete = opt.showDelete;
+    var meal = opt.meal;
+    var foodData = foods[item.foodId];
+    var foodName = foodData ? foodData.name : item.name;
+
+    var deleteBtn = showDelete
+      ? "<button class=\"delete-food\" type=\"button\" data-action=\"delete-food\" data-meal=\"" + meal + "\" data-item-id=\"" + escapeHtml(item.id) + "\" aria-label=\"删除“" + escapeHtml(foodName) + "”\">×</button>"
+      : "";
+
+    return "<div class=\"food\">" +
+      "<div class=\"photo\" role=\"img\" aria-label=\"" + escapeHtml(foodName) + "\">" +
+        deleteBtn +
+        "<img class=\"food-img\" src=\"assets/food/" + encodeURIComponent(item.foodId) + ".png\" alt=\"" + escapeHtml(foodName) + "\" onerror=\"this.style.display='none'\">" +
+      "</div>" +
+      "<span class=\"food-name\">" + escapeHtml(foodName) + "</span>" +
+    "</div>";
   }
 
   function renderHome() {
+    var today = new Date();
+    if (els.homeWeekdayEn) els.homeWeekdayEn.textContent = formatWeekdayEn(today);
+    if (els.homeDateShort) els.homeDateShort.textContent = formatShortDate(today);
+    if (els.homeDateFull) els.homeDateFull.textContent = formatFullDateZh(today);
+
     var openTasks = getTasks(todayKey).filter(function (task) { return !task.completed; });
-    els.homeTodoCount.textContent = openTasks.length + "项待完成";
+    els.homeTodoCount.textContent = openTasks.length + " 项待完成";
     if (openTasks.length) {
       els.homeTodoList.innerHTML = openTasks.slice(0, 2).map(function (task) {
-        return "<div class=\"home-task-row\">" +
-          "<button class=\"task-check\" type=\"button\" data-home-task=\"" + escapeHtml(task.id) + "\" aria-label=\"完成“" + escapeHtml(task.title) + "”\"></button>" +
-          "<span class=\"home-task-title\">" + escapeHtml(task.title) + "</span></div>";
-      }).join("");
+        return "<div class=\"task-row\">" +
+          "<button class=\"check\" type=\"button\" data-home-task=\"" + escapeHtml(task.id) + "\" aria-label=\"完成“" + escapeHtml(task.title) + "”\"></button>" +
+          "<span class=\"task-title\">" + escapeHtml(task.title) + "</span>" +
+        "</div>";
+      }).join("") + "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 ↗</button>";
     } else {
-      els.homeTodoList.innerHTML = "<div class=\"home-empty\">今天没有待办</div>";
+      els.homeTodoList.innerHTML = "<div class=\"empty\">今天没有待办</div>" +
+        "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 ↗</button>";
     }
-    els.homeTodoList.insertAdjacentHTML("beforeend", "<button class=\"view-all-button\" type=\"button\" data-action=\"view-all\">查看全部</button>");
 
     var lunch = state.meals.lunch.slice(0, 3);
     els.homeNextMealList.innerHTML = lunch.length
-      ? lunch.map(function (item) { return mealMarkup(item, true); }).join("")
-      : "<div class=\"summary-empty\">暂未添加餐品</div>";
+      ? lunch.map(function (item) { return foodItemMarkup(item); }).join("")
+      : "<div class=\"empty\">暂未添加餐品</div>";
   }
 
   function renderMeals() {
@@ -166,36 +219,48 @@
     els.mealsContent.innerHTML = ["breakfast", "lunch", "dinner"].map(function (meal) {
       var items = state.meals[meal];
       var content = items.length
-        ? items.map(function (item) {
-          return "<div class=\"meal-food\">" +
-            (state.mealEditMode ? "<button class=\"delete-food\" type=\"button\" data-action=\"delete-food\" data-meal=\"" + meal + "\" data-item-id=\"" + escapeHtml(item.id) + "\" aria-label=\"删除“" + escapeHtml(item.name) + "”\">×</button>" : "") +
-            "<div class=\"food-thumb img-" + item.foodId + "\"></div><span class=\"meal-food-name\">" + escapeHtml(item.name) + "</span></div>";
-        }).join("")
-        : "<div class=\"meal-empty\">暂未添加餐品</div>";
-      return "<section id=\"" + meal + "-section\" class=\"meal-section\">" +
-        "<h2 class=\"meal-section-title\">" + mealLabels[meal] + "</h2>" +
-        "<article class=\"card meal-card\"><div class=\"meal-items\">" + content + "</div>" +
-        "<button class=\"round-add meal-add\" type=\"button\" data-action=\"add-food\" data-meal=\"" + meal + "\" aria-label=\"为" + mealLabels[meal] + "添加餐品\"><span></span></button>" +
-        "</article></section>";
+        ? "<div class=\"panel food-grid\">" + items.map(function (item) {
+            return foodItemMarkup(item, { showDelete: state.mealEditMode, meal: meal });
+          }).join("") + "</div>"
+        : "<div class=\"panel food-grid\"><div class=\"empty\" style=\"grid-column: 1 / -1;\">暂未添加餐品</div></div>";
+
+      return "<section id=\"" + meal + "-section\" class=\"meal-block\">" +
+        "<div class=\"meal-top\">" +
+          "<span class=\"num\">" + mealNumbers[meal] + "</span>" +
+          "<h3>" + mealLabels[meal] + "</h3>" +
+          "<button class=\"plus\" type=\"button\" data-action=\"add-food\" data-meal=\"" + meal + "\" aria-label=\"添加" + mealLabels[meal] + "餐品\">+</button>" +
+        "</div>" +
+        content +
+      "</section>";
     }).join("");
   }
 
   function renderFoodSelect() {
     var targetMeal = mealLabels[state.targetMeal] ? state.targetMeal : "lunch";
     state.targetMeal = targetMeal;
-    els.mealTargetLabel.textContent = "当前将加入" + mealLabels[targetMeal];
+    els.mealTargetLabel.textContent = "当前将加入 · " + mealLabels[targetMeal];
+    if (els.mealTargetEn) els.mealTargetEn.textContent = mealEnglishLabels[targetMeal];
+
     els.categories.innerHTML = categories.map(function (category) {
-      return "<button class=\"category-button" + (state.selectedCategory === category.id ? " is-active" : "") + "\" type=\"button\" data-category=\"" + category.id + "\">" + category.name + "</button>";
+      var isActive = state.selectedCategory === category.id;
+      return "<button class=\"" + (isActive ? "active" : "") + "\" type=\"button\" data-category=\"" + category.id + "\" aria-pressed=\"" + (isActive ? "true" : "false") + "\">" + category.name + "</button>";
     }).join("");
+
     var list = Object.keys(foods).map(function (id) { return foods[id]; }).filter(function (food) { return food.category === state.selectedCategory; });
     if (!list.length) {
-      els.foodList.innerHTML = "<div class=\"card select-empty\">暂无可选水果</div>";
+      els.foodList.innerHTML = "<div class=\"panel empty select-empty\">暂无可选水果</div>";
       return;
     }
     els.foodList.innerHTML = list.map(function (food) {
-      return "<article class=\"card select-food-card\"><div class=\"food-photo img-" + food.id + "\"></div>" +
-        "<span class=\"select-food-name\">" + food.name + "</span>" +
-        "<button class=\"round-add\" type=\"button\" data-action=\"select-food\" data-food=\"" + food.id + "\" aria-label=\"添加" + food.name + "\"><span></span></button></article>";
+      return "<article class=\"food-choice\">" +
+        "<div class=\"photo\" role=\"img\" aria-label=\"" + escapeHtml(food.name) + "\">" +
+          "<img class=\"food-img\" src=\"assets/food/" + encodeURIComponent(food.id) + ".png\" alt=\"" + escapeHtml(food.name) + "\" onerror=\"this.style.display='none'\">" +
+        "</div>" +
+        "<div class=\"choice-info\">" +
+          "<strong>" + escapeHtml(food.name) + "</strong>" +
+          "<button class=\"plus\" type=\"button\" data-action=\"select-food\" data-food=\"" + food.id + "\" aria-label=\"添加" + escapeHtml(food.name) + "到" + mealLabels[targetMeal] + "\">+</button>" +
+        "</div>" +
+      "</article>";
     }).join("");
   }
 
@@ -204,26 +269,47 @@
     var month = state.calendarMonth.getMonth();
     var firstWeekday = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month + 1, 0).getDate();
-    els.calendarTitle.textContent = year + "年 " + (month + 1) + "月";
+    els.calendarTitle.textContent = year + " 年 " + (month + 1) + " 月";
+
     var html = "";
-    for (var blank = 0; blank < firstWeekday; blank += 1) html += "<span class=\"calendar-blank\" aria-hidden=\"true\"></span>";
+    for (var blank = 0; blank < firstWeekday; blank += 1) {
+      html += "<span class=\"calendar-blank\" aria-hidden=\"true\"></span>";
+    }
     for (var day = 1; day <= daysInMonth; day += 1) {
       var key = year + "-" + pad(month + 1) + "-" + pad(day);
-      html += "<button class=\"calendar-day" + (key === state.selectedDate ? " is-selected" : "") + "\" type=\"button\" data-date=\"" + key + "\" aria-label=\"" + (month + 1) + "月" + day + "日\">" + day + "</button>";
+      var isSelected = key === state.selectedDate;
+      html += "<button class=\"day" + (isSelected ? " selected" : "") + "\" type=\"button\" data-date=\"" + key + "\" aria-label=\"" + year + "年" + (month + 1) + "月" + day + "日\" aria-pressed=\"" + (isSelected ? "true" : "false") + "\">" + day + "</button>";
     }
     els.calendarDays.innerHTML = html;
   }
 
   function renderTodoList() {
     var tasks = getTasks(state.selectedDate);
-    els.todoList.innerHTML = tasks.length ? tasks.map(function (task) {
-      return "<article class=\"card todo-row" + (task.completed ? " is-completed" : "") + "\">" +
-        "<button class=\"task-check" + (task.completed ? " is-done" : "") + "\" type=\"button\" data-task-id=\"" + escapeHtml(task.id) + "\" aria-label=\"" + (task.completed ? "恢复“" : "完成“") + escapeHtml(task.title) + "”\"></button>" +
-        "<span class=\"todo-title\">" + escapeHtml(task.title) + "</span></article>";
-    }).join("") : "<div class=\"todo-empty\">暂无任务</div>";
+    var openCount = tasks.filter(function (t) { return !t.completed; }).length;
+
+    if (els.todoSelectedDateLabel) {
+      els.todoSelectedDateLabel.textContent = formatTodoSelectedDate(state.selectedDate);
+    }
+    if (els.todoCountBadge) {
+      els.todoCountBadge.textContent = openCount + " 项待完成";
+    }
+
+    if (tasks.length) {
+      els.todoList.innerHTML = tasks.map(function (task) {
+        return "<div class=\"task-row" + (task.completed ? " done" : "") + "\">" +
+          "<button class=\"check" + (task.completed ? " done" : "") + "\" type=\"button\" data-task-id=\"" + escapeHtml(task.id) + "\" aria-label=\"" + (task.completed ? "恢复“" : "完成“") + escapeHtml(task.title) + "”\"></button>" +
+          "<span class=\"task-title\">" + escapeHtml(task.title) + "</span>" +
+        "</div>";
+      }).join("");
+    } else {
+      els.todoList.innerHTML = "<div class=\"empty\">暂无任务</div>";
+    }
   }
 
-  function renderTodos() { renderCalendar(); renderTodoList(); }
+  function renderTodos() {
+    renderCalendar();
+    renderTodoList();
+  }
 
   function renderCurrentPage() {
     if (state.currentPage === "home") renderHome();
@@ -242,7 +328,9 @@
     window.clearTimeout(toastTimer);
     els.toast.textContent = message;
     els.toast.classList.add("is-visible");
-    toastTimer = window.setTimeout(function () { els.toast.classList.remove("is-visible"); }, 1900);
+    toastTimer = window.setTimeout(function () {
+      els.toast.classList.remove("is-visible");
+    }, 1900);
   }
 
   function setSelectedDate(key) {
@@ -271,7 +359,15 @@
     state.currentPage = page;
     els.pages.forEach(function (element) { element.classList.toggle("is-active", element.dataset.page === page); });
     els.nav.classList.toggle("is-hidden", page === "food-select");
-    els.navButtons.forEach(function (button) { button.classList.toggle("is-active", button.dataset.nav === page); });
+    els.navButtons.forEach(function (button) {
+      var isActive = button.dataset.nav === page;
+      button.classList.toggle("active", isActive);
+      if (isActive) {
+        button.setAttribute("aria-current", "page");
+      } else {
+        button.removeAttribute("aria-current");
+      }
+    });
     renderCurrentPage();
     window.scrollTo(0, 0);
     if (page === "meals" && state.pendingMealScroll) {
@@ -329,7 +425,9 @@
     if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === "function") previouslyFocusedElement.focus();
   }
 
-  els.navButtons.forEach(function (button) { button.addEventListener("click", function () { navigate(button.dataset.nav); }); });
+  els.navButtons.forEach(function (button) {
+    button.addEventListener("click", function () { navigate(button.dataset.nav); });
+  });
 
   els.homeTodoList.addEventListener("click", function (event) {
     var taskButton = event.target.closest("[data-home-task]");
