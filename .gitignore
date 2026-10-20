@@ -1,0 +1,24 @@
+# ========== JetBrains IDE (IntelliJ IDEA / WebStorm 等) ==========
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ========== VS Code ==========
+.vscode/
+*.code-workspace
+
+# ========== 操作系统临时文件 ==========
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========== Office / Word 文档临时锁文件（打开 .docx 时生成） ==========
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# ========== 项目临时文件与日志 ==========
+TEMP/
+*.log
+*.tmp
