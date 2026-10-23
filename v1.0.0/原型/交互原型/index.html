@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="个人 APP 可交互离线原型 - 蓝调独立志 UI">
+  <meta name="description" content="个人 APP 可交互离线原型">
   <title>个人 APP 原型</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,60 +12,39 @@
     <!-- 首页 -->
     <section class="page" data-page="home" aria-labelledby="home-title">
       <header class="masthead">
-        <div class="issue">
-          <span>个人 APP / PERSONAL</span>
-          <span>VOL. 01</span>
-        </div>
-        <h1 id="home-title" class="page-title">
-          首页<span class="star" aria-hidden="true">★</span>
-        </h1>
-        <div class="subtitle" aria-hidden="true">EVERYDAY / SMALL THINGS</div>
-        <span class="sticker" aria-hidden="true">DAY<br>BY DAY!</span>
+        <h1 id="home-title" class="page-title">首页</h1>
+        <div id="home-date-full" class="page-date">2026 年 9 月 21 日 · 周一</div>
       </header>
 
       <div class="paper">
-        <div class="row-heading">
-          <span class="tag" id="home-tag"><span id="home-weekday-en">MON</span> / <span id="home-date-short">09.21</span></span>
-          <small id="home-date-full">2026 年 9 月 21 日</small>
-        </div>
-
         <section class="panel home-todo-panel" aria-labelledby="home-todo-bar">
-          <h2 class="section-bar" id="home-todo-bar">
-            <span><b class="icon" aria-hidden="true">✓</b>今日待办</span>
+          <div class="section-bar" id="home-todo-bar">
+            <h2 class="card-title">今日待办</h2>
             <small id="home-todo-count">0 项待完成</small>
-          </h2>
+          </div>
           <div id="home-todo-list" class="task-list"></div>
         </section>
 
         <div class="section-gap"></div>
 
         <div class="row-heading">
-          <h2>下一餐 <span aria-hidden="true">↗</span></h2>
+          <h2>下一餐</h2>
           <small id="home-next-meal-meta">午餐 12:00</small>
         </div>
         <button id="home-next-meal" class="panel next-meal-card" type="button" aria-label="查看午餐">
           <div id="home-next-meal-list" class="food-grid"></div>
           <div class="caption-line">
-            <span>LUNCH / 12:00</span>
-            <span>查看餐品 →</span>
+            <span>午餐 · 12:00</span>
+            <span class="link-label">查看餐品 <span class="arrow-icon" aria-hidden="true">›</span></span>
           </div>
         </button>
-
-        <div class="small-note" aria-hidden="true">MAKE ROOM FOR EVERYDAY.</div>
       </div>
     </section>
 
     <!-- 点餐页 -->
     <section class="page" data-page="meals" aria-labelledby="meals-title">
-      <header class="masthead">
-        <div class="issue">
-          <span>个人 APP / PERSONAL</span>
-          <span>VOL. 01</span>
-        </div>
-        <h1 id="meals-title" class="page-title">
-          点餐<span class="star" aria-hidden="true">★</span>
-        </h1>
-        <div class="subtitle" aria-hidden="true">THREE MEALS / ONE DAY</div>
+      <header class="masthead meals-head">
+        <h1 id="meals-title" class="page-title">点餐</h1>
         <button id="meal-edit-toggle" class="header-action" type="button">修改</button>
       </header>
 
@@ -76,45 +55,33 @@
 
     <!-- 选餐页（子页，隐藏底部导航） -->
     <section class="page food-select-page" data-page="food-select" aria-labelledby="food-select-title">
-      <header class="masthead select-head">
-        <div class="issue">
-          <button id="back-to-meals" class="back" type="button" aria-label="返回点餐页">← 返回点餐</button>
-          <span>VOL. 01</span>
-        </div>
-        <h1 id="food-select-title" class="page-title">
-          选餐<span class="star" aria-hidden="true">★</span>
-        </h1>
-        <div class="subtitle" aria-hidden="true">PICK SOMETHING GOOD</div>
+      <header class="select-head">
+        <button id="back-to-meals" class="back" type="button" aria-label="返回点餐页">
+          <span class="back-icon" aria-hidden="true">‹</span> 返回点餐
+        </button>
+        <h1 id="food-select-title" class="page-title">选餐</h1>
       </header>
 
       <div class="paper select-paper">
         <div class="target">
+          <span class="target-bar" aria-hidden="true"></span>
           <span id="meal-target-label">当前将加入 · 午餐</span>
-          <span id="meal-target-en" aria-hidden="true">LUNCH</span>
         </div>
         <div class="select-layout">
           <nav id="food-categories" class="categories" aria-label="食物分类"></nav>
           <div id="food-list" class="select-list" aria-live="polite"></div>
         </div>
       </div>
-      <div class="select-bottom" aria-hidden="true">PERSONAL / FOOD SELECTION</div>
     </section>
 
     <!-- 待办页 -->
     <section class="page" data-page="todos" aria-labelledby="todos-title">
       <header class="masthead">
-        <div class="issue">
-          <span>个人 APP / PERSONAL</span>
-          <span>VOL. 01</span>
-        </div>
-        <h1 id="todos-title" class="page-title">
-          待办<span class="star" aria-hidden="true">✳</span>
-        </h1>
-        <div class="subtitle" aria-hidden="true">ONE THING AT A TIME</div>
+        <h1 id="todos-title" class="page-title">待办</h1>
       </header>
 
       <div class="paper todo-paper">
-        <section class="calendar" aria-label="任务日历">
+        <section class="panel calendar" aria-label="任务日历">
           <div class="month">
             <button id="previous-month" class="calendar-arrow previous" type="button" aria-label="上个月">‹</button>
             <h2 id="calendar-title"></h2>
@@ -126,16 +93,16 @@
           <div id="calendar-days" class="calendar-days days" aria-label="选择日期"></div>
         </section>
 
-        <form id="task-form" class="task-entry" novalidate>
+        <form id="task-form" class="panel task-entry" novalidate>
           <label class="sr-only" for="task-input">添加任务</label>
           <input id="task-input" type="text" maxlength="50" placeholder="添加任务" autocomplete="off">
           <button class="plus" type="submit" aria-label="添加任务">+</button>
         </form>
 
-        <p class="todo-date">
-          <strong id="todo-selected-date-label">09 月 21 日 · 周一</strong>
+        <div class="todo-date-row">
+          <h2 id="todo-selected-date-label">09 月 21 日 · 周一</h2>
           <span id="todo-count-badge">0 项待完成</span>
-        </p>
+        </div>
 
         <section class="panel todo-panel">
           <div id="todo-list" class="task-list"></div>
@@ -146,25 +113,14 @@
     <!-- 我的页 -->
     <section class="page" data-page="profile" aria-labelledby="profile-title">
       <header class="masthead">
-        <div class="issue">
-          <span>个人 APP / PERSONAL</span>
-          <span>VOL. 01</span>
-        </div>
-        <h1 id="profile-title" class="page-title">
-          我的<span class="star" aria-hidden="true">★</span>
-        </h1>
-        <div class="subtitle" aria-hidden="true">A LITTLE SPACE OF MY OWN</div>
-        <span class="sticker" aria-hidden="true">HELLO<br>ME!</span>
+        <h1 id="profile-title" class="page-title">我的</h1>
       </header>
 
       <div class="paper profile-paper">
         <section class="identity panel" aria-label="个人信息">
           <div class="identity-top">
             <div class="avatar" role="img" aria-label="用户头像"></div>
-            <div>
-              <h2 class="identity-name">小满</h2>
-              <span class="identity-sub" aria-hidden="true">MY PERSONAL SPACE</span>
-            </div>
+            <h2 class="identity-name">小满</h2>
           </div>
           <dl class="data-rows">
             <div class="data-row"><dt>昵称</dt><dd>小满</dd></div>
@@ -172,14 +128,7 @@
           </dl>
         </section>
 
-        <button id="logout-button" class="logout" type="button">退出登录 ↗</button>
-
-        <div class="profile-art" aria-hidden="true">
-          <span class="burst">✳</span>
-          <div class="big">SMALL<br><span class="outline">THINGS,</span><br>MY LIFE.</div>
-          <div class="underline"></div>
-          <div class="tiny">EVERYDAY IS MY OWN.</div>
-        </div>
+        <button id="logout-button" class="panel logout-card" type="button">退出登录</button>
       </div>
     </section>
   </main>

@@ -4,8 +4,6 @@
   var STORAGE_KEY = "personalAppPrototype.v1";
   var PAGE_NAMES = ["home", "meals", "food-select", "todos", "profile"];
   var mealLabels = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐" };
-  var mealEnglishLabels = { breakfast: "BREAKFAST", lunch: "LUNCH", dinner: "DINNER" };
-  var mealNumbers = { breakfast: "01", lunch: "02", dinner: "03" };
   var categories = [
     { id: "staple", name: "主食" },
     { id: "meat", name: "肉类" },
@@ -26,7 +24,6 @@
   };
 
   var weekdayNamesZh = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-  var weekdayNamesEn = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
   function pad(number) { return String(number).padStart(2, "0"); }
   function toDateKey(date) { return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()); }
@@ -47,14 +44,8 @@
   function formatFullDateZh(date) {
     return date.getFullYear() + " 年 " + (date.getMonth() + 1) + " 月 " + date.getDate() + " 日";
   }
-  function formatShortDate(date) {
-    return pad(date.getMonth() + 1) + "." + pad(date.getDate());
-  }
   function formatWeekdayZh(date) {
     return weekdayNamesZh[date.getDay()];
-  }
-  function formatWeekdayEn(date) {
-    return weekdayNamesEn[date.getDay()];
   }
   function formatTodoSelectedDate(key) {
     var d = parseDateKey(key);
@@ -100,14 +91,11 @@
     homeTodoList: document.getElementById("home-todo-list"),
     homeNextMeal: document.getElementById("home-next-meal"),
     homeNextMealList: document.getElementById("home-next-meal-list"),
-    homeWeekdayEn: document.getElementById("home-weekday-en"),
-    homeDateShort: document.getElementById("home-date-short"),
     homeDateFull: document.getElementById("home-date-full"),
     mealEditToggle: document.getElementById("meal-edit-toggle"),
     mealsContent: document.getElementById("meals-content"),
     backToMeals: document.getElementById("back-to-meals"),
     mealTargetLabel: document.getElementById("meal-target-label"),
-    mealTargetEn: document.getElementById("meal-target-en"),
     categories: document.getElementById("food-categories"),
     foodList: document.getElementById("food-list"),
     calendarTitle: document.getElementById("calendar-title"),
@@ -190,9 +178,9 @@
 
   function renderHome() {
     var today = new Date();
-    if (els.homeWeekdayEn) els.homeWeekdayEn.textContent = formatWeekdayEn(today);
-    if (els.homeDateShort) els.homeDateShort.textContent = formatShortDate(today);
-    if (els.homeDateFull) els.homeDateFull.textContent = formatFullDateZh(today);
+    if (els.homeDateFull) {
+      els.homeDateFull.textContent = formatFullDateZh(today) + " · " + formatWeekdayZh(today);
+    }
 
     var openTasks = getTasks(todayKey).filter(function (task) { return !task.completed; });
     els.homeTodoCount.textContent = openTasks.length + " 项待完成";
@@ -202,10 +190,10 @@
           "<button class=\"check\" type=\"button\" data-home-task=\"" + escapeHtml(task.id) + "\" aria-label=\"完成“" + escapeHtml(task.title) + "”\"></button>" +
           "<span class=\"task-title\">" + escapeHtml(task.title) + "</span>" +
         "</div>";
-      }).join("") + "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 ↗</button>";
+      }).join("") + "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 <span class=\"arrow-icon\" aria-hidden=\"true\">›</span></button>";
     } else {
       els.homeTodoList.innerHTML = "<div class=\"empty\">今天没有待办</div>" +
-        "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 ↗</button>";
+        "<button class=\"textlink\" type=\"button\" data-action=\"view-all\">查看全部 <span class=\"arrow-icon\" aria-hidden=\"true\">›</span></button>";
     }
 
     var lunch = state.meals.lunch.slice(0, 3);
@@ -226,7 +214,6 @@
 
       return "<section id=\"" + meal + "-section\" class=\"meal-block\">" +
         "<div class=\"meal-top\">" +
-          "<span class=\"num\">" + mealNumbers[meal] + "</span>" +
           "<h3>" + mealLabels[meal] + "</h3>" +
           "<button class=\"plus\" type=\"button\" data-action=\"add-food\" data-meal=\"" + meal + "\" aria-label=\"添加" + mealLabels[meal] + "餐品\">+</button>" +
         "</div>" +
@@ -239,7 +226,6 @@
     var targetMeal = mealLabels[state.targetMeal] ? state.targetMeal : "lunch";
     state.targetMeal = targetMeal;
     els.mealTargetLabel.textContent = "当前将加入 · " + mealLabels[targetMeal];
-    if (els.mealTargetEn) els.mealTargetEn.textContent = mealEnglishLabels[targetMeal];
 
     els.categories.innerHTML = categories.map(function (category) {
       var isActive = state.selectedCategory === category.id;
@@ -251,17 +237,15 @@
       els.foodList.innerHTML = "<div class=\"panel empty select-empty\">暂无可选水果</div>";
       return;
     }
-    els.foodList.innerHTML = list.map(function (food) {
+    els.foodList.innerHTML = "<div class=\"panel food-select-card\">" + list.map(function (food) {
       return "<article class=\"food-choice\">" +
         "<div class=\"photo\" role=\"img\" aria-label=\"" + escapeHtml(food.name) + "\">" +
           "<img class=\"food-img\" src=\"assets/food/" + encodeURIComponent(food.id) + ".png\" alt=\"" + escapeHtml(food.name) + "\" onerror=\"this.style.display='none'\">" +
         "</div>" +
-        "<div class=\"choice-info\">" +
-          "<strong>" + escapeHtml(food.name) + "</strong>" +
-          "<button class=\"plus\" type=\"button\" data-action=\"select-food\" data-food=\"" + food.id + "\" aria-label=\"添加" + escapeHtml(food.name) + "到" + mealLabels[targetMeal] + "\">+</button>" +
-        "</div>" +
+        "<span class=\"choice-name\">" + escapeHtml(food.name) + "</span>" +
+        "<button class=\"plus\" type=\"button\" data-action=\"select-food\" data-food=\"" + food.id + "\" aria-label=\"添加" + escapeHtml(food.name) + "到" + mealLabels[targetMeal] + "\">+</button>" +
       "</article>";
-    }).join("");
+    }).join("") + "</div>";
   }
 
   function renderCalendar() {
@@ -278,7 +262,7 @@
     for (var day = 1; day <= daysInMonth; day += 1) {
       var key = year + "-" + pad(month + 1) + "-" + pad(day);
       var isSelected = key === state.selectedDate;
-      html += "<button class=\"day" + (isSelected ? " selected" : "") + "\" type=\"button\" data-date=\"" + key + "\" aria-label=\"" + year + "年" + (month + 1) + "月" + day + "日\" aria-pressed=\"" + (isSelected ? "true" : "false") + "\">" + day + "</button>";
+      html += "<button class=\"day" + (isSelected ? " selected" : "") + "\" type=\"button\" data-date=\"" + key + "\" aria-label=\"" + year + "年" + (month + 1) + "月" + day + "日\" aria-pressed=\"" + (isSelected ? "true" : "false") + "\"><span class=\"day-text\">" + day + "</span></button>";
     }
     els.calendarDays.innerHTML = html;
   }
